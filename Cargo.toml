@@ -1,0 +1,19 @@
+[package]
+#publish = false
+name = "combid"
+version = "0.5.1"
+description = "Generate numeric identifiers"
+
+authors = ["Jonas mg (https://github.com/tredoe)"]
+#homepage = ""
+repository = "https://github.com/tredoe/combid"
+documentation = "https://docs.rs/combid"
+
+readme = "README.md"
+keywords = ["id", "identifier", "database"]
+license = "MPL-2.0"
+
+[dependencies]
+byteorder = "^0.5"
+rand = "^0.3"
+
