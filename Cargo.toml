@@ -1,7 +1,7 @@
 [package]
 #publish = false
 name = "combid"
-version = "0.5.1"
+version = "0.5.2"
 description = "Generate numeric identifiers"
 
 authors = ["Jonas mg (https://github.com/tredoe)"]
@@ -14,6 +14,5 @@ keywords = ["id", "identifier", "database"]
 license = "MPL-2.0"
 
 [dependencies]
-byteorder = "^0.5"
-rand = "^0.3"
-
+byteorder = "^0"
+rand = "^0"

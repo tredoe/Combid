@@ -16,7 +16,7 @@ Add to your 'Cargo.toml' file:
 ```toml
 [dependencies]
 combid = "^0"
-rand = "^0.3"
+rand = "^0"
 ```
 
 and to your crate root:

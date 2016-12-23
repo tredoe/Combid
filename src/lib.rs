@@ -1,11 +1,11 @@
 // Copyright 2016  Jonas mg
 // See the 'AUTHORS' file at the top-level directory for a full list of authors.
-
+//
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//! Package combid generates numeric identifiers.
+//! Generates numeric identifiers.
 
 extern crate byteorder;
 extern crate rand;
@@ -17,15 +17,19 @@ use std::time;
 
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
-/// gen generates a Combid (Combined Identifier), a combination of a timestamp
-/// and some random bits. The timestamp ensures they are ordered chronologically,
-/// and the random bits ensure that each ID is unique, even if thousands of people
-/// are creating IDs at the same time.
+/// Generates a Combid (Combined Identifier), a combination of a timestamp and
+/// some random bits. The timestamp ensures they are ordered chronologically,
+/// and the random bits ensure that each ID is unique, even if thousands of
+/// people are creating IDs at the same time.
 ///
-/// timestamp     - 5 bytes (40 bits) - 4 bytes from seconds and the other ones from nanoseconds
+/// timestamp     - 5 bytes (40 bits) - 4 bytes from seconds and the other ones from nanoseconds  
 /// random number - 3 bytes (24 bits) - gives us up to 16_777_216 possible values
 ///
 /// # Examples
+///
+/// ```
+/// extern crate combid;
+/// extern crate rand;
 ///
 /// let mut rng = rand::thread_rng();
 ///
@@ -34,6 +38,7 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 ///     Err(e) => panic!(e), // handle error
 /// };
 /// println!("combid: {}", id);
+/// ```
 ///
 pub fn gen<R: rand::Rng>(rng: &mut R) -> Result<i64, Error> {
     let now = match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
@@ -75,7 +80,7 @@ pub fn gen<R: rand::Rng>(rng: &mut R) -> Result<i64, Error> {
     }
 }
 
-/// gen_timeid generates an identifier based in the current time.
+/// Generates an identifier based in the current time.
 pub fn gen_timeid() -> Result<i64, Error> {
     let now = match time::UNIX_EPOCH.elapsed() {
         Ok(v) => v,
@@ -113,7 +118,7 @@ pub fn gen_timeid() -> Result<i64, Error> {
 // == Iterators
 //
 
-/// Generator is an iterator which will generate combids using a thread-local RNG.
+/// Iterator which will generate combids using a thread-local RNG.
 pub struct Generator<T> {
     rng: T,
 }
@@ -135,10 +140,11 @@ impl<T: rand::Rng> Iterator for Generator<T> {
     }
 }
 
-/// TimeGenerator is an iterator which will generate identifiers based in the current time.
+/// Iterator which will generate identifiers based in the current time.
 ///
 /// # Examples
 ///
+/// ```
 /// let mut gen_time = combid::TimeGenerator {};
 ///
 /// let timeid = match gen_time.next() {
@@ -151,6 +157,7 @@ impl<T: rand::Rng> Iterator for Generator<T> {
 ///     None => unreachable!(),
 /// };
 /// println!("timeid: {}", timeid);
+/// ```
 ///
 pub struct TimeGenerator {}
 
