@@ -6,7 +6,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 use std::error;
-use std::error::Error as ErrorT;
 use std::fmt;
 use std::io;
 use std::time;
