@@ -7,15 +7,16 @@
 
 //! Generates numeric identifiers.
 
-extern crate byteorder;
-extern crate rand;
-
-use std::error;
-use std::fmt;
 use std::io;
 use std::time;
 
+extern crate byteorder;
+extern crate rand;
+
 use byteorder::{ReadBytesExt, WriteBytesExt};
+
+mod errors;
+use errors::*;
 
 /// Generates a Combid (Combined Identifier), a combination of a timestamp and
 /// some random bits. The timestamp ensures they are ordered chronologically,
@@ -40,28 +41,28 @@ use byteorder::{ReadBytesExt, WriteBytesExt};
 /// println!("combid: {}", id);
 /// ```
 ///
-pub fn gen<R: rand::Rng>(rng: &mut R) -> Result<i64, Error> {
+pub fn gen<R: rand::Rng>(rng: &mut R) -> Result<i64, IdError> {
     let now = match time::SystemTime::now().duration_since(time::UNIX_EPOCH) {
         Ok(v) => v,
-        Err(e) => return Err(Error::Time(e)),
+        Err(e) => return Err(IdError::Time(e)),
     };
 
     let mut v_time_sec: Vec<u8> = Vec::with_capacity(8);
     match v_time_sec.write_u64::<byteorder::BigEndian>(now.as_secs()) {
         Ok(_) => (),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 
     let mut v_time_nsec: Vec<u8> = Vec::with_capacity(4);
     match v_time_nsec.write_u32::<byteorder::BigEndian>(now.subsec_nanos()) {
         Ok(_) => (),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 
     let mut v_rand: Vec<u8> = Vec::with_capacity(4);
     match v_rand.write_u32::<byteorder::BigEndian>(rng.gen()) {
         Ok(_) => (),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 
     let array: [u8; 8] = [v_time_sec[4],
@@ -76,27 +77,27 @@ pub fn gen<R: rand::Rng>(rng: &mut R) -> Result<i64, Error> {
     let mut rd = io::Cursor::new(array);
     match rd.read_i64::<byteorder::BigEndian>() {
         Ok(v) => Ok(v),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 }
 
 /// Generates an identifier based in the current time.
-pub fn gen_timeid() -> Result<i64, Error> {
+pub fn gen_timeid() -> Result<i64, IdError> {
     let now = match time::UNIX_EPOCH.elapsed() {
         Ok(v) => v,
-        Err(e) => return Err(Error::Time(e)),
+        Err(e) => return Err(IdError::Time(e)),
     };
 
     let mut v_time_sec: Vec<u8> = Vec::with_capacity(8);
     match v_time_sec.write_u64::<byteorder::BigEndian>(now.as_secs()) {
         Ok(_) => (),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 
     let mut v_time_nsec: Vec<u8> = Vec::with_capacity(4);
     match v_time_nsec.write_u32::<byteorder::BigEndian>(now.subsec_nanos()) {
         Ok(_) => (),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 
     let array: [u8; 8] = [v_time_sec[4],
@@ -111,7 +112,7 @@ pub fn gen_timeid() -> Result<i64, Error> {
     let mut rdr = io::Cursor::new(array);
     match rdr.read_i64::<byteorder::BigEndian>() {
         Ok(v) => Ok(v),
-        Err(e) => return Err(Error::Io(e)),
+        Err(e) => return Err(IdError::Io(e)),
     }
 }
 
@@ -130,9 +131,9 @@ impl<T: rand::Rng> Generator<T> {
 }
 
 impl<T: rand::Rng> Iterator for Generator<T> {
-    type Item = Result<i64, Error>;
+    type Item = Result<i64, IdError>;
 
-    fn next(&mut self) -> Option<Result<i64, Error>> {
+    fn next(&mut self) -> Option<Result<i64, IdError>> {
         match gen(&mut self.rng) {
             Ok(v) => Some(Ok(v)),
             Err(e) => Some(Err(e)),
@@ -162,59 +163,13 @@ impl<T: rand::Rng> Iterator for Generator<T> {
 pub struct TimeGenerator {}
 
 impl Iterator for TimeGenerator {
-    type Item = Result<i64, Error>;
+    type Item = Result<i64, IdError>;
 
-    fn next(&mut self) -> Option<Result<i64, Error>> {
+    fn next(&mut self) -> Option<Result<i64, IdError>> {
         match gen_timeid() {
             Ok(v) => Some(Ok(v)),
             Err(e) => Some(Err(e)),
         }
-    }
-}
-
-// == Errors
-//
-
-#[derive(Debug)]
-pub enum Error {
-    Io(io::Error),
-    Time(time::SystemTimeError),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::Io(ref err) => err.fmt(f),
-            Error::Time(ref err) => err.fmt(f),
-        }
-    }
-}
-
-impl error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::Io(ref err) => err.description(),
-            Error::Time(ref err) => err.description(),
-        }
-    }
-
-    fn cause(&self) -> Option<&error::Error> {
-        match *self {
-            Error::Io(ref err) => Some(err),
-            Error::Time(ref err) => Some(err),
-        }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(err: io::Error) -> Error {
-        Error::Io(err)
-    }
-}
-
-impl From<time::SystemTimeError> for Error {
-    fn from(err: time::SystemTimeError) -> Error {
-        Error::Time(err)
     }
 }
 
@@ -223,12 +178,13 @@ impl From<time::SystemTimeError> for Error {
 
 #[cfg(test)]
 mod tests {
-    use rand;
-
-    use super::*;
     use std::time;
 
     use byteorder::{BigEndian, WriteBytesExt};
+    use rand;
+
+    use errors::*;
+    use super::*;
 
     #[test]
     // Check the bytes filled at marshaling a time.
@@ -256,7 +212,7 @@ mod tests {
     fn iterators() {
         let mut rng = rand::thread_rng();
         let mut gen = Generator::new(&mut rng);
-        let mut result: Result<i64, Error>;
+        let mut result: Result<i64, IdError>;
 
         print!("\n== Generating Combids\n");
         for _ in 0..5 {

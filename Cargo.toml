@@ -1,11 +1,9 @@
 [package]
-#publish = false
 name = "combid"
-version = "0.5.2"
+version = "0.6.0"
 description = "Generate numeric identifiers"
 
 authors = ["Jonas mg (https://github.com/tredoe)"]
-#homepage = ""
 repository = "https://github.com/tredoe/combid"
 documentation = "https://docs.rs/combid"
 
