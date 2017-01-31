@@ -16,7 +16,7 @@ extern crate rand;
 use byteorder::{ReadBytesExt, WriteBytesExt};
 
 mod errors;
-use errors::*;
+pub use errors::*;
 
 /// Generates a Combid (Combined Identifier), a combination of a timestamp and
 /// some random bits. The timestamp ensures they are ordered chronologically,
@@ -183,7 +183,6 @@ mod tests {
     use byteorder::{BigEndian, WriteBytesExt};
     use rand;
 
-    use errors::*;
     use super::*;
 
     #[test]
